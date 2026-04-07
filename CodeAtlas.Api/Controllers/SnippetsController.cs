@@ -55,4 +55,22 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         
         return CreatedAtAction(nameof(GetSnippet), new { id = snippetDto.Id }, snippetDto);
     }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult> UpdateSnippet(string id, UpdateSnippetDto updateSnippetDto)
+    {
+        Snippet? snippet = await dbContext
+            .Snippets
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (snippet is null)
+        {
+            return NotFound();
+        }
+        
+        snippet.UpdateFromDto(updateSnippetDto);
+        await dbContext.SaveChangesAsync();
+        
+        return NoContent();
+    }
 }

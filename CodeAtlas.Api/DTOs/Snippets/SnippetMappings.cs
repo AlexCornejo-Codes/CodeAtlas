@@ -36,4 +36,15 @@ internal static class SnippetMappings
         
         return snippet;
     }
+    
+    public static void UpdateFromDto(this Snippet snippet, UpdateSnippetDto dto)
+    {
+        snippet.Title = dto.Title;
+        snippet.Description = dto.Description;
+        snippet.Code = dto.Code;
+        snippet.Language = dto.Language;
+        snippet.Visibility = dto.Visibility;
+        snippet.UpdatedAtUtc = DateTime.UtcNow;
+    }
+    
 }
