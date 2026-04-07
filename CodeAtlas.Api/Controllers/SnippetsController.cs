@@ -15,18 +15,7 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
     {
         List<SnippetDto> snippets = await dbContext
             .Snippets
-            .Select(s => new SnippetDto
-            {
-                Id = s.Id,
-                Title = s.Title,
-                Description = s.Description,
-                Code = s.Code,
-                Language = s.Language,
-                Visibility = s.Visibility,
-                IsArchived = s.IsArchived,
-                CreatedAtUtc = s.CreatedAtUtc,
-                UpdatedAtUtc = s.UpdatedAtUtc
-            })
+            .Select(SnippetQueries.ProjectToDto())
             .ToListAsync();
         
         var snippetsCollectionDto = new SnippetsCollectionDto
@@ -43,18 +32,7 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         SnippetDto? snippet = await dbContext
             .Snippets
             .Where(s => s.Id == id)
-            .Select(s => new SnippetDto
-            {
-                Id = s.Id,
-                Title = s.Title,
-                Description = s.Description,
-                Code = s.Code,
-                Language = s.Language,
-                Visibility = s.Visibility,
-                IsArchived = s.IsArchived,
-                CreatedAtUtc = s.CreatedAtUtc,
-                UpdatedAtUtc = s.UpdatedAtUtc
-            })
+            .Select(SnippetQueries.ProjectToDto())
             .FirstOrDefaultAsync();
 
         if (snippet is null)
@@ -63,5 +41,18 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         }
         
         return Ok(snippet);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<SnippetDto>> CreateSnippet(CreateSnippetDto createSnippetDto)
+    {
+        Snippet snippet = createSnippetDto.ToEntity();
+        
+        dbContext.Snippets.Add(snippet);
+        await dbContext.SaveChangesAsync();
+
+        SnippetDto snippetDto = snippet.ToDto();
+        
+        return CreatedAtAction(nameof(GetSnippet), new { id = snippetDto.Id }, snippetDto);
     }
 }
