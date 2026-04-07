@@ -1,6 +1,7 @@
 using CodeAtlas.Api.Database;
 using CodeAtlas.Api.DTOs.Snippets;
 using CodeAtlas.Api.Entities;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -69,6 +70,35 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         }
         
         snippet.UpdateFromDto(updateSnippetDto);
+        await dbContext.SaveChangesAsync();
+        
+        return NoContent();
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<ActionResult> ArchiveSnippet(string id, JsonPatchDocument<SnippetDto> patchDocument)
+    {
+        Snippet? snippet = await dbContext
+            .Snippets
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (snippet is null)
+        {
+            return NotFound();
+        }
+
+        SnippetDto snippetDto = snippet.ToDto();
+        
+        patchDocument.ApplyTo(snippetDto, ModelState);
+        
+        if (!TryValidateModel(snippetDto))
+        {
+            return ValidationProblem(ModelState);
+        }
+        
+        snippet.IsArchived = snippetDto.IsArchived;
+        snippet.UpdatedAtUtc = DateTime.UtcNow;
+        
         await dbContext.SaveChangesAsync();
         
         return NoContent();
