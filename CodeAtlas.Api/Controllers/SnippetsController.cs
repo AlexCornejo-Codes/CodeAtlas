@@ -103,4 +103,22 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> DeleteSnippet(string id)
+    {
+        Snippet? snippet = await dbContext
+            .Snippets
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (snippet is null)
+        {
+            return NotFound();
+        }
+        
+        dbContext.Snippets.Remove(snippet);
+        await dbContext.SaveChangesAsync();
+        
+        return NoContent();
+    }
 }
