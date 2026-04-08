@@ -78,4 +78,22 @@ public sealed class TechnologiesController(ApplicationDbContext dbContext) : Con
         
         return NoContent();
     }
+
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> DeleteTechnology(string id)
+    {
+        Technology? technology = await dbContext
+            .Technologies
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (technology is null)
+        {
+            return NotFound();
+        }
+        
+        dbContext.Technologies.Remove(technology);
+        await dbContext.SaveChangesAsync();
+        
+        return NoContent();
+    }
 }
