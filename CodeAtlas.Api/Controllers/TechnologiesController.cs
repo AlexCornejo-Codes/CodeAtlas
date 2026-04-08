@@ -1,5 +1,6 @@
 using CodeAtlas.Api.Database;
 using CodeAtlas.Api.DTOs.Technologies;
+using CodeAtlas.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,5 +41,23 @@ public sealed class TechnologiesController(ApplicationDbContext dbContext) : Con
         }
         
         return Ok(technology);
+    }
+    
+    [HttpPost]
+    public async Task<ActionResult<TechnologyDto>> CreateTechnology(CreateTechnologyDto createTechnologyDto)
+    {
+        Technology technology = createTechnologyDto.ToEntity();
+        
+        if (await dbContext.Technologies.AnyAsync(t => t.Name == technology.Name))
+        {
+            return Conflict($"The technology {technology.Name} already exists.");
+        }
+        
+        dbContext.Technologies.Add(technology);
+        await dbContext.SaveChangesAsync();
+        
+        TechnologyDto technologyDto = technology.ToDto();
+        
+        return CreatedAtAction(nameof(GetTechnology), new { id = technologyDto.Id }, technologyDto);
     }
 }
