@@ -28,4 +28,11 @@ internal static class TechnologyMappings
         
         return technology;
     }
+    
+    public static void UpdateFromDto(this Technology technology, UpdateTechnologyDto dto)
+    {
+        technology.Name = dto.Name;
+        technology.Description = dto.Description;
+        technology.UpdatedAtUtc = DateTime.UtcNow;
+    }
 }

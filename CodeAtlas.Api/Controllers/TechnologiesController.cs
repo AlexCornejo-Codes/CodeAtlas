@@ -39,7 +39,7 @@ public sealed class TechnologiesController(ApplicationDbContext dbContext) : Con
         {
             return NotFound();
         }
-        
+         
         return Ok(technology);
     }
     
@@ -59,5 +59,23 @@ public sealed class TechnologiesController(ApplicationDbContext dbContext) : Con
         TechnologyDto technologyDto = technology.ToDto();
         
         return CreatedAtAction(nameof(GetTechnology), new { id = technologyDto.Id }, technologyDto);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<ActionResult> UpdateTechnology(string id, UpdateTechnologyDto updateTechnologyDto)
+    {
+        Technology? technology = await dbContext
+            .Technologies
+            .FirstOrDefaultAsync(t => t.Id == id);
+
+        if (technology is null)
+        {
+            return NotFound();
+        }
+        
+        technology.UpdateFromDto(updateTechnologyDto);
+        await dbContext.SaveChangesAsync();
+        
+        return NoContent();
     }
 }
