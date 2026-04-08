@@ -6,6 +6,8 @@ namespace CodeAtlas.Api.Database;
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
     public DbSet<Snippet> Snippets { get; set; }
+    public DbSet<Technology> Technologies { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema(Schemas.Application);
