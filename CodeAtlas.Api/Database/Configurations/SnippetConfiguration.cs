@@ -25,6 +25,10 @@ public sealed class SnippetConfiguration : IEntityTypeConfiguration<Snippet>
             .HasColumnType("text")
             .IsRequired();
         
+        builder.HasMany(s => s.Technologies)
+            .WithMany()
+            .UsingEntity<SnippetTechnology>();
+        
         builder.HasIndex(s => s.CreatedAtUtc);
         builder.HasIndex(s => s.Language);
         builder.HasIndex(s => s.Visibility);

@@ -11,6 +11,9 @@ public sealed class Snippet
     public bool IsArchived { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? UpdatedAtUtc { get; set; }
+
+    public List<SnippetTechnology> SnippetTechnologies { get; set; }
+    public List<Technology> Technologies { get; set; }
 }
 
 public enum Language

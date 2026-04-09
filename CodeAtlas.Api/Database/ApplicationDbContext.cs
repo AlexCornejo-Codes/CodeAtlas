@@ -7,6 +7,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 {
     public DbSet<Snippet> Snippets { get; set; }
     public DbSet<Technology> Technologies { get; set; }
+    public DbSet<SnippetTechnology> SnippetTechnologies { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
