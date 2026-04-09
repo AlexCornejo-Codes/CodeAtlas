@@ -28,12 +28,12 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
     }
     
     [HttpGet("{id}")]
-    public async Task<ActionResult<SnippetDto>> GetSnippet(string id)
+    public async Task<ActionResult<SnippetWithTechnologiesDto>> GetSnippet(string id)
     {
-        SnippetDto? snippet = await dbContext
+        SnippetWithTechnologiesDto? snippet = await dbContext
             .Snippets
             .Where(s => s.Id == id)
-            .Select(SnippetQueries.ProjectToDto())
+            .Select(SnippetQueries.ProjectToDtoWithTechnologiesDto())
             .FirstOrDefaultAsync();
 
         if (snippet is null)
