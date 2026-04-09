@@ -1,7 +1,10 @@
 using CodeAtlas.Api.Database;
 using CodeAtlas.Api.DTOs.Technologies;
 using CodeAtlas.Api.Entities;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace CodeAtlas.Api.Controllers;
@@ -44,8 +47,21 @@ public sealed class TechnologiesController(ApplicationDbContext dbContext) : Con
     }
     
     [HttpPost]
-    public async Task<ActionResult<TechnologyDto>> CreateTechnology(CreateTechnologyDto createTechnologyDto)
+    public async Task<ActionResult<TechnologyDto>> CreateTechnology(
+        CreateTechnologyDto createTechnologyDto,
+        IValidator<CreateTechnologyDto> validator,
+        ProblemDetailsFactory problemDetailsFactory)
     {
+        ValidationResult validationResult = await validator.ValidateAsync(createTechnologyDto);
+        if (!validationResult.IsValid)
+        {
+            ProblemDetails problem = problemDetailsFactory.CreateProblemDetails(
+                HttpContext, StatusCodes.Status400BadRequest);
+            problem.Extensions.Add("errors", validationResult.ToDictionary());
+            
+            return BadRequest(problem);
+        }
+
         Technology technology = createTechnologyDto.ToEntity();
         
         if (await dbContext.Technologies.AnyAsync(t => t.Name == technology.Name))
