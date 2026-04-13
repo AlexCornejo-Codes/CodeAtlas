@@ -1,6 +1,8 @@
 using CodeAtlas.Api.Database;
 using CodeAtlas.Api.DTOs.Snippets;
 using CodeAtlas.Api.Entities;
+using FluentValidation;
+using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -45,8 +47,16 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
     }
 
     [HttpPost]
-    public async Task<ActionResult<SnippetDto>> CreateSnippet(CreateSnippetDto createSnippetDto)
+    public async Task<ActionResult<SnippetDto>> CreateSnippet(CreateSnippetDto createSnippetDto,
+        IValidator<CreateSnippetDto> validator)
     {
+        ValidationResult validationResult = await validator.ValidateAsync(createSnippetDto);
+        
+        if (!validationResult.IsValid)
+        {
+            return BadRequest(validationResult.ToDictionary());
+        }
+        
         Snippet snippet = createSnippetDto.ToEntity();
         
         dbContext.Snippets.Add(snippet);

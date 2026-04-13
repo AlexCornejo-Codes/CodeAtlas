@@ -66,7 +66,9 @@ public sealed class TechnologiesController(ApplicationDbContext dbContext) : Con
         
         if (await dbContext.Technologies.AnyAsync(t => t.Name == technology.Name))
         {
-            return Conflict($"The technology {technology.Name} already exists.");
+            return Problem(
+                detail: $"The technology with name '{technology.Name}' already exists.",
+                statusCode: StatusCodes.Status409Conflict);
         }
         
         dbContext.Technologies.Add(technology);
