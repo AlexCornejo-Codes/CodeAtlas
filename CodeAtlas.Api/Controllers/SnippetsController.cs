@@ -2,7 +2,6 @@ using CodeAtlas.Api.Database;
 using CodeAtlas.Api.DTOs.Snippets;
 using CodeAtlas.Api.Entities;
 using FluentValidation;
-using FluentValidation.Results;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +13,16 @@ namespace CodeAtlas.Api.Controllers;
 public sealed class SnippetsController(ApplicationDbContext dbContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<SnippetsCollectionDto>> GetSnippets()
+    public async Task<ActionResult<SnippetsCollectionDto>> GetSnippets([FromQuery] SnippetsQueryParameters query)
     {
+        query.Search ??= query.Search?.Trim().ToLower();
+        
         List<SnippetDto> snippets = await dbContext
             .Snippets
+            .Where(s => query.Search == null || 
+                        s.Title.ToLower().Contains(query.Search) || 
+                        s.Description != null && s.Description.ToLower().Contains(query.Search))
+            .Where(s => query.Language == null || s.Language == query.Language)
             .Select(SnippetQueries.ProjectToDto())
             .ToListAsync();
         
