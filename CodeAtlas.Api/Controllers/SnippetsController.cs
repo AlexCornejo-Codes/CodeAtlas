@@ -50,12 +50,7 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
     public async Task<ActionResult<SnippetDto>> CreateSnippet(CreateSnippetDto createSnippetDto,
         IValidator<CreateSnippetDto> validator)
     {
-        ValidationResult validationResult = await validator.ValidateAsync(createSnippetDto);
-        
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(validationResult.ToDictionary());
-        }
+        await validator.ValidateAndThrowAsync(createSnippetDto);
         
         Snippet snippet = createSnippetDto.ToEntity();
         
