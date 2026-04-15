@@ -1,6 +1,9 @@
 using CodeAtlas.Api.Database;
+using CodeAtlas.Api.DTOs.Snippets;
+using CodeAtlas.Api.Entities;
 using CodeAtlas.Api.Extensions;
 using CodeAtlas.Api.Middleware;
+using CodeAtlas.Api.Services;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -59,6 +62,10 @@ builder.Logging.AddOpenTelemetry(options =>
     options.IncludeScopes = true;
     options.IncludeFormattedMessage = true;
 });
+
+builder.Services.AddTransient<SortMappingProvider>();
+builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<SnippetDto, Snippet>>(_ => 
+    SnippetMappings.SortMapping);
 
 WebApplication app = builder.Build();
 

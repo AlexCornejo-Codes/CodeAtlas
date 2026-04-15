@@ -1,9 +1,23 @@
 using CodeAtlas.Api.Entities;
+using CodeAtlas.Api.Services;
 
 namespace CodeAtlas.Api.DTOs.Snippets;
 
 internal static class SnippetMappings
 {
+    public static readonly SortMappingDefinition<SnippetDto, Snippet> SortMapping = new()
+    {
+        Mappings =
+        [
+            new SortMapping("title", nameof(Snippet.Title)),
+            new SortMapping("description", nameof(Snippet.Description)),
+            new SortMapping("language", nameof(Snippet.Language)),
+            new SortMapping("visibility", nameof(Snippet.Visibility)),
+            new SortMapping("createdAtUtc", nameof(Snippet.CreatedAtUtc)),
+            new SortMapping("updatedAtUtc", nameof(Snippet.UpdatedAtUtc))
+        ]
+    };
+        
     public static SnippetDto ToDto(this Snippet snippet)
     {
         return new SnippetDto
