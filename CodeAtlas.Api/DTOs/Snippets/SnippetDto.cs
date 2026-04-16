@@ -2,11 +2,6 @@ using CodeAtlas.Api.Entities;
 
 namespace CodeAtlas.Api.DTOs.Snippets;
 
-public sealed record SnippetsCollectionDto
-{
-    public List<SnippetDto> Data { get; init; }
-}
-
 public sealed record SnippetDto
 {
     public required string Id { get; init; }

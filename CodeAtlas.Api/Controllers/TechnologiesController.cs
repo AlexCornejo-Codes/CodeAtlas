@@ -23,7 +23,7 @@ public sealed class TechnologiesController(ApplicationDbContext dbContext) : Con
         
         var technologiesCollectionDto = new TechnologiesCollectionDto
         {
-            Data = technologies
+            Items = technologies
         };
         
         return Ok(technologiesCollectionDto);

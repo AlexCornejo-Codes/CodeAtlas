@@ -1,10 +1,5 @@
 namespace CodeAtlas.Api.DTOs.Technologies;
 
-public sealed record TechnologiesCollectionDto
-{
-    public List<TechnologyDto> Data { get; init; }
-}
-
 public sealed record TechnologyDto
 {
     public required string Id { get; init; }

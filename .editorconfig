@@ -427,3 +427,7 @@ dotnet_diagnostic.S6781.severity = none
 dotnet_diagnostic.CA1862.severity = none
 
 dotnet_diagnostic.S2326.severity = none
+
+csharp_style_var_for_built_in_types = true
+csharp_style_var_when_type_is_apparent = true
+csharp_style_var_elsewhere = false

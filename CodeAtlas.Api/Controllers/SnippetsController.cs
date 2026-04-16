@@ -1,4 +1,5 @@
 using CodeAtlas.Api.Database;
+using CodeAtlas.Api.DTOs.Common;
 using CodeAtlas.Api.DTOs.Snippets;
 using CodeAtlas.Api.Entities;
 using CodeAtlas.Api.Services;
@@ -14,7 +15,7 @@ namespace CodeAtlas.Api.Controllers;
 public sealed class SnippetsController(ApplicationDbContext dbContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<SnippetsCollectionDto>> GetSnippets(
+    public async Task<ActionResult<PaginationResult<SnippetDto>>> GetSnippets(
         [FromQuery] SnippetsQueryParameters query,
         SortMappingProvider sortMappingProvider)
     {
@@ -22,29 +23,26 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         {
             return Problem(
                 statusCode: StatusCodes.Status400BadRequest,
-                detail: $"The provided sort parameter '{query.Sort}' is not valid. Please check the documentation for valid sort parameters.");
+                detail: $"The provided sort parameter '{query.Sort}' is not valid." +
+                        $" Please check the documentation for valid sort parameters.");
         }
 
         query.Search ??= query.Search?.Trim().ToLower();
 
         SortMapping[] sortMappings = sortMappingProvider.GetMappings<SnippetDto, Snippet>();
-        
-        List<SnippetDto> snippets = await dbContext
+
+        IQueryable<SnippetDto> snippetsQuery = dbContext
             .Snippets
             .Where(s => query.Search == null || 
                         s.Title.ToLower().Contains(query.Search) || 
                         s.Description != null && s.Description.ToLower().Contains(query.Search))
             .Where(s => query.Language == null || s.Language == query.Language)
             .ApplySort(query.Sort, sortMappings)
-            .Select(SnippetQueries.ProjectToDto())
-            .ToListAsync();
+            .Select(SnippetQueries.ProjectToDto());
+
+        var paginationResult = await PaginationResult<SnippetDto>.CreateAsync(snippetsQuery, query.Page, query.PageSize);
         
-        var snippetsCollectionDto = new SnippetsCollectionDto
-        {
-            Data = snippets
-        };
-        
-        return Ok(snippetsCollectionDto);
+        return Ok(paginationResult);
     }
     
     [HttpGet("{id}")]
