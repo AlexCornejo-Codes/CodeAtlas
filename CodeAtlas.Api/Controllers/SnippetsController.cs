@@ -1,8 +1,10 @@
+using System.Dynamic;
 using CodeAtlas.Api.Database;
 using CodeAtlas.Api.DTOs.Common;
 using CodeAtlas.Api.DTOs.Snippets;
 using CodeAtlas.Api.Entities;
 using CodeAtlas.Api.Services;
+using CodeAtlas.Api.Services.Sorting;
 using FluentValidation;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -15,9 +17,10 @@ namespace CodeAtlas.Api.Controllers;
 public sealed class SnippetsController(ApplicationDbContext dbContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<PaginationResult<SnippetDto>>> GetSnippets(
+    public async Task<IActionResult> GetSnippets(
         [FromQuery] SnippetsQueryParameters query,
-        SortMappingProvider sortMappingProvider)
+        SortMappingProvider sortMappingProvider,
+        DataShapingService dataShapingService)
     {
         if (!sortMappingProvider.ValidateMappings<SnippetDto, Snippet>(query.Sort))
         {
@@ -25,6 +28,13 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
                 statusCode: StatusCodes.Status400BadRequest,
                 detail: $"The provided sort parameter '{query.Sort}' is not valid." +
                         $" Please check the documentation for valid sort parameters.");
+        }
+
+        if (!dataShapingService.Validate<SnippetDto>(query.Fields))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: $"The provided data shaping fields are not valid: '{query.Fields}'");
         }
 
         query.Search ??= query.Search?.Trim().ToLower();
@@ -39,15 +49,38 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
             .Where(s => query.Language == null || s.Language == query.Language)
             .ApplySort(query.Sort, sortMappings)
             .Select(SnippetQueries.ProjectToDto());
+        
+        var totalCount = await snippetsQuery.CountAsync();
+        
+        List<SnippetDto> snippets = await snippetsQuery
+            .Skip((query.Page - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .ToListAsync();
 
-        var paginationResult = await PaginationResult<SnippetDto>.CreateAsync(snippetsQuery, query.Page, query.PageSize);
+        var paginationResult = new PaginationResult<ExpandoObject>
+        {
+            Items = dataShapingService.ShapeCollectionData(snippets, query.Fields),
+            Page = query.Page,
+            PageSize = query.PageSize,
+            TotalCount = totalCount
+        };
         
         return Ok(paginationResult);
     }
     
     [HttpGet("{id}")]
-    public async Task<ActionResult<SnippetWithTechnologiesDto>> GetSnippet(string id)
+    public async Task<IActionResult> GetSnippet(
+        string id,
+        string? fields,
+        DataShapingService dataShapingService)
     {
+        if (!dataShapingService.Validate<SnippetDto>(fields))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: $"The provided data shaping fields are not valid: '{fields}'");
+        }
+        
         SnippetWithTechnologiesDto? snippet = await dbContext
             .Snippets
             .Where(s => s.Id == id)
@@ -59,7 +92,9 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
             return NotFound();
         }
         
-        return Ok(snippet);
+        ExpandoObject shapedSnippetDto = dataShapingService.ShapeData(snippet, fields);
+        
+        return Ok(shapedSnippetDto);
     }
 
     [HttpPost]

@@ -1,4 +1,4 @@
-namespace CodeAtlas.Api.Services;
+namespace CodeAtlas.Api.Services.Sorting;
 
 public sealed class SortMappingProvider(IEnumerable<ISortMappingDefinition> sortMappingDefinitions)
 {

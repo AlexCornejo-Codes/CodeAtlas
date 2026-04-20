@@ -1,3 +1,3 @@
-namespace CodeAtlas.Api.Services;
+namespace CodeAtlas.Api.Services.Sorting;
 
 public interface ISortMappingDefinition;

@@ -4,9 +4,11 @@ using CodeAtlas.Api.Entities;
 using CodeAtlas.Api.Extensions;
 using CodeAtlas.Api.Middleware;
 using CodeAtlas.Api.Services;
+using CodeAtlas.Api.Services.Sorting;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Newtonsoft.Json.Serialization;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
@@ -19,7 +21,8 @@ builder.Services.AddControllers(options =>
 {
     options.ReturnHttpNotAcceptable = true;
 })
-.AddNewtonsoftJson()
+.AddNewtonsoftJson(options => options.SerializerSettings.ContractResolver = 
+    new CamelCasePropertyNamesContractResolver())
 .AddXmlSerializerFormatters();
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
@@ -66,6 +69,8 @@ builder.Logging.AddOpenTelemetry(options =>
 builder.Services.AddTransient<SortMappingProvider>();
 builder.Services.AddSingleton<ISortMappingDefinition, SortMappingDefinition<SnippetDto, Snippet>>(_ => 
     SnippetMappings.SortMapping);
+
+builder.Services.AddTransient<DataShapingService>();
 
 WebApplication app = builder.Build();
 

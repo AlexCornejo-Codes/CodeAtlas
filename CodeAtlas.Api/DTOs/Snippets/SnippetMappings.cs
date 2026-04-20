@@ -1,5 +1,6 @@
 using CodeAtlas.Api.Entities;
 using CodeAtlas.Api.Services;
+using CodeAtlas.Api.Services.Sorting;
 
 namespace CodeAtlas.Api.DTOs.Snippets;
 

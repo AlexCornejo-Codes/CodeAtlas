@@ -1,6 +1,6 @@
 using System.Linq.Dynamic.Core;
 
-namespace CodeAtlas.Api.Services;
+namespace CodeAtlas.Api.Services.Sorting;
 
 internal static class QueryableExtensions
 {
