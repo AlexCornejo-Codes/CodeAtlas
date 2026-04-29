@@ -10,6 +10,8 @@ namespace CodeAtlas.Api.Controllers;
 [Route("snippets/{snippetId}/technologies")]
 public sealed class SnippetTechnologiesController(ApplicationDbContext dbContext) : ControllerBase
 {
+    public static readonly string Name = nameof(SnippetTechnologiesController).Replace("Controller", string.Empty);
+    
     [HttpPut]
     public async Task<ActionResult> UpsertSnippetTechnologies(string snippetId,
         UpsertSnippetTechnologiesDto upsertSnippetTechnologiesDto)

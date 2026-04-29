@@ -14,7 +14,7 @@ namespace CodeAtlas.Api.Controllers;
 
 [ApiController]
 [Route("snippets")]
-public sealed class SnippetsController(ApplicationDbContext dbContext) : ControllerBase
+public sealed class SnippetsController(ApplicationDbContext dbContext, LinkService linkService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetSnippets(
@@ -59,12 +59,21 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
 
         var paginationResult = new PaginationResult<ExpandoObject>
         {
-            Items = dataShapingService.ShapeCollectionData(snippets, query.Fields),
+            Items = dataShapingService.ShapeCollectionData(
+                snippets,
+                query.Fields,
+                s => CreateLinksForSnippet(s.Id, query.Fields)),
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = totalCount
         };
         
+        paginationResult.Links = CreateLinksForSnippets(
+            query,
+            paginationResult.HasNextPage,
+            paginationResult.HasPreviousPage
+            );
+
         return Ok(paginationResult);
     }
     
@@ -91,8 +100,12 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         {
             return NotFound();
         }
-        
+
         ExpandoObject shapedSnippetDto = dataShapingService.ShapeData(snippet, fields);
+
+        List<LinkDto> links = CreateLinksForSnippet(id, fields);
+
+        shapedSnippetDto.TryAdd("links", links);
         
         return Ok(shapedSnippetDto);
     }
@@ -109,6 +122,8 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         await dbContext.SaveChangesAsync();
 
         SnippetDto snippetDto = snippet.ToDto();
+        
+        snippetDto.Links = CreateLinksForSnippet(snippetDto.Id, null);
         
         return CreatedAtAction(nameof(GetSnippet), new { id = snippetDto.Id }, snippetDto);
     }
@@ -176,5 +191,72 @@ public sealed class SnippetsController(ApplicationDbContext dbContext) : Control
         await dbContext.SaveChangesAsync();
         
         return NoContent();
+    }
+
+    private List<LinkDto> CreateLinksForSnippets(
+        SnippetsQueryParameters parameters,
+        bool hasNextPage,
+        bool hasPreviousPage)
+    {
+        List<LinkDto> links =
+        [
+            linkService.Create(nameof(GetSnippets), "self", HttpMethods.Get, new 
+                { 
+                    page = parameters.Page,
+                    pageSize = parameters.PageSize,
+                    fields = parameters.Fields,
+                    q = parameters.Search,
+                    sort = parameters.Sort,
+                    language = parameters.Language
+                }),
+            linkService.Create(nameof(CreateSnippet), "create", HttpMethods.Post)
+        ];
+
+        if (hasNextPage)
+        {
+            links.Add(linkService.Create(nameof(GetSnippets), "next-page", HttpMethods.Get, new 
+                { 
+                    page = parameters.Page + 1,
+                    pageSize = parameters.PageSize,
+                    fields = parameters.Fields,
+                    q = parameters.Search,
+                    sort = parameters.Sort,
+                    language = parameters.Language
+                }));
+        }
+
+        if (hasPreviousPage)
+        {
+            links.Add(linkService.Create(nameof(GetSnippets), "previous-page", HttpMethods.Get, new 
+                { 
+                    page = parameters.Page - 1,
+                    pageSize = parameters.PageSize,
+                    fields = parameters.Fields,
+                    q = parameters.Search,
+                    sort = parameters.Sort,
+                    language = parameters.Language
+                }));
+        }
+
+        return links;
+    }
+
+    private List<LinkDto> CreateLinksForSnippet(string id, string? fields)
+    {
+        List<LinkDto> links =
+        [
+            linkService.Create(nameof(GetSnippet), "self", HttpMethods.Get, new { id, fields }),
+            linkService.Create(nameof(UpdateSnippet), "update", HttpMethods.Put, new { id }),
+            linkService.Create(nameof(ArchiveSnippet), "archive", HttpMethods.Patch, new { id }),
+            linkService.Create(nameof(DeleteSnippet), "delete", HttpMethods.Delete, new { id }),
+            linkService.Create(
+                nameof(SnippetTechnologiesController.UpsertSnippetTechnologies),
+                "upsert-technologies",
+                HttpMethods.Put,
+                new { snippetId = id },
+                SnippetTechnologiesController.Name)
+        ];
+        
+        return links;
     }
 }

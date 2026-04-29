@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Dynamic;
 using System.Reflection;
+using CodeAtlas.Api.DTOs.Common;
 
 namespace CodeAtlas.Api.Services;
 
@@ -36,7 +37,10 @@ public sealed class DataShapingService
         return (ExpandoObject)shapedObject;
     }
 
-    public List<ExpandoObject> ShapeCollectionData<T>(IEnumerable<T> entities, string? fields)
+    public List<ExpandoObject> ShapeCollectionData<T>(
+        IEnumerable<T> entities,
+        string? fields,
+        Func<T, List<LinkDto>>? linksFactory = null)
     {
         HashSet<string> fieldsSet = fields?
             .Split(',', StringSplitOptions.RemoveEmptyEntries)
@@ -64,7 +68,12 @@ public sealed class DataShapingService
             {
                 shapedObject[propertyInfo.Name] = propertyInfo.GetValue(entity);
             }
-            
+
+            if (linksFactory is not null)
+            {
+                shapedObject["links"] = linksFactory(entity);
+            }
+
             shapedObjects.Add((ExpandoObject)shapedObject);
         }
         

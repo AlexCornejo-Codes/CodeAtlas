@@ -55,7 +55,8 @@ public static class DependencyInjection
             options
                 .UseNpgsql(
                     builder.Configuration.GetConnectionString("Database"),
-                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Application))
+                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable(
+                        HistoryRepository.DefaultTableName, Schemas.Application))
                 .UseSnakeCaseNamingConvention()
         );
         
@@ -94,6 +95,9 @@ public static class DependencyInjection
             SnippetMappings.SortMapping);
 
         builder.Services.AddTransient<DataShapingService>();
+
+        builder.Services.AddHttpContextAccessor();
+        builder.Services.AddTransient<LinkService>();
         
         return builder;
     }
