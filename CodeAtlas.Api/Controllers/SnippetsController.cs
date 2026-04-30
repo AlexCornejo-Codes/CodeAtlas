@@ -56,23 +56,27 @@ public sealed class SnippetsController(ApplicationDbContext dbContext, LinkServi
             .Skip((query.Page - 1) * query.PageSize)
             .Take(query.PageSize)
             .ToListAsync();
+        
+        var includeLinks = query.Accept == CustomMediaTypeNames.Application.HateoasJson;
 
         var paginationResult = new PaginationResult<ExpandoObject>
         {
             Items = dataShapingService.ShapeCollectionData(
                 snippets,
                 query.Fields,
-                s => CreateLinksForSnippet(s.Id, query.Fields)),
+                includeLinks ? s => CreateLinksForSnippet(s.Id, query.Fields) : null),
             Page = query.Page,
             PageSize = query.PageSize,
             TotalCount = totalCount
         };
-        
-        paginationResult.Links = CreateLinksForSnippets(
-            query,
-            paginationResult.HasNextPage,
-            paginationResult.HasPreviousPage
-            );
+
+        if (includeLinks)
+        {
+            paginationResult.Links = CreateLinksForSnippets(
+                query,
+                paginationResult.HasNextPage,
+                paginationResult.HasPreviousPage);
+        }
 
         return Ok(paginationResult);
     }
@@ -81,6 +85,8 @@ public sealed class SnippetsController(ApplicationDbContext dbContext, LinkServi
     public async Task<IActionResult> GetSnippet(
         string id,
         string? fields,
+        [FromHeader(Name = "Accept")]
+        string? accept,
         DataShapingService dataShapingService)
     {
         if (!dataShapingService.Validate<SnippetDto>(fields))
@@ -103,9 +109,11 @@ public sealed class SnippetsController(ApplicationDbContext dbContext, LinkServi
 
         ExpandoObject shapedSnippetDto = dataShapingService.ShapeData(snippet, fields);
 
-        List<LinkDto> links = CreateLinksForSnippet(id, fields);
-
-        shapedSnippetDto.TryAdd("links", links);
+        if (accept == CustomMediaTypeNames.Application.HateoasJson)
+        {
+            List<LinkDto> links = CreateLinksForSnippet(id, fields);
+            shapedSnippetDto.TryAdd("links", links);
+        }
         
         return Ok(shapedSnippetDto);
     }
